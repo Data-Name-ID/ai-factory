@@ -8,6 +8,13 @@ interface McpServerConfig {
   env?: Record<string, string>;
 }
 
+interface CopilotMcpServerConfig {
+  type: 'stdio';
+  command: string;
+  args?: string[];
+  env?: Record<string, string>;
+}
+
 interface OpenCodeMcpServerConfig {
   type: 'local';
   command: string[];
@@ -21,6 +28,10 @@ interface McpSettings {
 interface OpenCodeSettings {
   [key: string]: unknown;
   mcp?: Record<string, OpenCodeMcpServerConfig>;
+}
+
+interface CopilotMcpSettings {
+  servers?: Record<string, CopilotMcpServerConfig>;
 }
 
 export interface McpOptions {
@@ -39,6 +50,15 @@ function toOpenCodeFormat(config: McpServerConfig): OpenCodeMcpServerConfig {
   return result;
 }
 
+function toCopilotFormat(config: McpServerConfig): CopilotMcpServerConfig {
+  return {
+    type: 'stdio',
+    command: config.command,
+    ...(config.args ? { args: config.args } : {}),
+    ...(config.env ? { env: config.env } : {}),
+  };
+}
+
 export async function configureMcp(projectDir: string, options: McpOptions, agentId: string = 'claude'): Promise<string[]> {
   const agent = getAgentConfig(agentId);
 
@@ -47,6 +67,7 @@ export async function configureMcp(projectDir: string, options: McpOptions, agen
   }
 
   const isOpenCode = agentId === 'opencode';
+  const isCopilot = agentId === 'copilot';
   const configuredServers: string[] = [];
   const settingsPath = path.join(projectDir, agent.settingsFile);
   const settingsDir = path.dirname(settingsPath);
@@ -80,6 +101,39 @@ export async function configureMcp(projectDir: string, options: McpOptions, agen
         const template = await readJsonFile<McpServerConfig>(path.join(mcpTemplatesDir, file));
         if (template) {
           settings.mcp[key] = toOpenCodeFormat(template);
+          configuredServers.push(key);
+        }
+      }
+    }
+
+    if (configuredServers.length > 0) {
+      await writeJsonFile(settingsPath, settings);
+    }
+  } else if (isCopilot) {
+    let settings: CopilotMcpSettings = {};
+    if (await fileExists(settingsPath)) {
+      const existing = await readJsonFile<CopilotMcpSettings>(settingsPath);
+      if (existing) {
+        settings = existing;
+      }
+    }
+
+    if (!settings.servers) {
+      settings.servers = {};
+    }
+
+    const serverEntries: [string, string][] = [
+      ['github', 'github.json'],
+      ['filesystem', 'filesystem.json'],
+      ['postgres', 'postgres.json'],
+      ['chromeDevtools', 'chrome-devtools.json'],
+    ];
+
+    for (const [key, file] of serverEntries) {
+      if (options[key as keyof McpOptions]) {
+        const template = await readJsonFile<McpServerConfig>(path.join(mcpTemplatesDir, file));
+        if (template) {
+          settings.servers[key] = toCopilotFormat(template);
           configuredServers.push(key);
         }
       }

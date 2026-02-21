@@ -1,4 +1,5 @@
 import { DefaultTransformer } from './transformers/default.js';
+import { CursorTransformer } from './transformers/cursor.js';
 import { KiloCodeTransformer } from './transformers/kilocode.js';
 import { AntigravityTransformer } from './transformers/antigravity.js';
 
@@ -7,6 +8,7 @@ export interface TransformResult {
   targetName: string;
   content: string;
   flat: boolean;
+  directoryRenames?: Record<string, string>;
 }
 
 export interface AgentTransformer {
@@ -52,7 +54,15 @@ export function simplifyFrontmatter(content: string): string {
   return content.replace(/^---\n[\s\S]*?\n---/, newFrontmatter);
 }
 
+export function replaceTemplatesWithAssets(content: string): { content: string; directoryRenames?: Record<string, string> } {
+  return {
+    content: content.replace(/templates\//g, 'assets/'),
+    directoryRenames: { templates: 'assets' },
+  };
+}
+
 const registry: Record<string, () => AgentTransformer> = {
+  cursor: () => new CursorTransformer(),
   kilocode: () => new KiloCodeTransformer(),
   antigravity: () => new AntigravityTransformer(),
 };

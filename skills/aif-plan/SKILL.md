@@ -183,8 +183,8 @@ cp .ai-factory/ARCHITECTURE.md "${WORKTREE}/.ai-factory/ARCHITECTURE.md" 2>/dev/
 # Past lessons / patches
 cp -r .ai-factory/patches/ "${WORKTREE}/.ai-factory/patches/" 2>/dev/null
 
-# Claude Code skills + settings
-cp -r .claude/ "${WORKTREE}/.claude/" 2>/dev/null
+# {{agent_name}} skills + settings
+cp -r {{config_dir}}/ "${WORKTREE}/{{config_dir}}/" 2>/dev/null
 
 # CLAUDE.md only if untracked
 if [ -f CLAUDE.md ] && ! git ls-files --error-unmatch CLAUDE.md &>/dev/null; then

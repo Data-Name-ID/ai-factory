@@ -85,3 +85,7 @@ export async function removeDirectory(dirPath: string): Promise<void> {
 export async function removeFile(filePath: string): Promise<void> {
   await fs.remove(filePath);
 }
+
+export async function renameDirectory(from: string, to: string): Promise<void> {
+  await fs.move(from, to, { overwrite: true });
+}

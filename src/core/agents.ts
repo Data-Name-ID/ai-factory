@@ -6,6 +6,7 @@ export interface AgentConfig {
   settingsFile: string | null;
   supportsMcp: boolean;
   skillsCliAgent: string | null;
+  stripFrontmatterFields?: string[];
 }
 
 const AGENT_REGISTRY: Record<string, AgentConfig> = {
@@ -26,6 +27,7 @@ const AGENT_REGISTRY: Record<string, AgentConfig> = {
     settingsFile: '.cursor/mcp.json',
     supportsMcp: true,
     skillsCliAgent: 'cursor',
+    stripFrontmatterFields: ['allowed-tools', 'argument-hint'],
   },
   codex: {
     id: 'codex',
@@ -41,9 +43,10 @@ const AGENT_REGISTRY: Record<string, AgentConfig> = {
     displayName: 'GitHub Copilot',
     configDir: '.github',
     skillsDir: '.github/skills',
-    settingsFile: null,
-    supportsMcp: false,
+    settingsFile: '.vscode/mcp.json',
+    supportsMcp: true,
     skillsCliAgent: 'github-copilot',
+    stripFrontmatterFields: ['allowed-tools'],
   },
   gemini: {
     id: 'gemini',

@@ -1,5 +1,5 @@
 import path from 'path';
-import { copyDirectory, getSkillsDir, ensureDir, listDirectories, readTextFile, writeTextFile } from '../utils/fs.js';
+import { copyDirectory, getSkillsDir, ensureDir, listDirectories, readTextFile, writeTextFile, fileExists, renameDirectory } from '../utils/fs.js';
 import type { AgentInstallation } from './config.js';
 import { getAgentConfig } from './agents.js';
 import { processSkillTemplates, buildTemplateVars, processTemplate } from './template.js';
@@ -39,6 +39,14 @@ async function installSkillWithTransformer(
     await copyDirectory(sourceSkillDir, targetSkillDir);
     if (result.content !== content) {
       await writeTextFile(path.join(targetSkillDir, 'SKILL.md'), result.content);
+    }
+    if (result.directoryRenames) {
+      for (const [from, to] of Object.entries(result.directoryRenames)) {
+        const fromPath = path.join(targetSkillDir, from);
+        if (await fileExists(fromPath)) {
+          await renameDirectory(fromPath, path.join(targetSkillDir, to));
+        }
+      }
     }
     await processSkillTemplates(targetSkillDir, agentConfig);
   }
